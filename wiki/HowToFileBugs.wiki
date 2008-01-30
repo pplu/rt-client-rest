@@ -1,0 +1,5 @@
+#summary How to file bugs
+
+= How to file bugs =
+
+Bugs should be filed using [http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Client-REST CPAN RT].
