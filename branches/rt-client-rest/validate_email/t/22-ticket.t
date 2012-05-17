@@ -1,13 +1,13 @@
 use strict;
 use warnings;
 
-use Test::More tests => 113;
+use Test::More;
 use Test::Exception;
 
 use constant METHODS => (
     'new', 'to_form', 'from_form', 'rt_type', 'comment', 'correspond',
     'attachments', 'transactions', 'take', 'untake', 'steal',
-    
+
     # attributes:
     'id', 'queue', 'owner', 'creator', 'subject', 'status', 'priority',
     'initial_priority', 'final_priority', 'requestors', 'cc', 'admin_cc',
@@ -87,6 +87,20 @@ for my $method (qw(comment correspond)) {
             attachments => ['- this file does not exist -'],
         );
     } 'RT::Client::REST::CannotReadAttachmentException';
+
+    throws_ok {
+        $ticket->$method(
+            cc => ['4'],
+            message => 'abc',
+        );
+    } 'RT::Client::REST::InvalidEmailAddressException';
+
+    throws_ok {
+        $ticket->$method(
+            bcc => ['4'],
+            message => 'abc',
+        );
+    } 'RT::Client::REST::InvalidEmailAddressException';
 }
 
 for my $method (qw(attachments transactions)) {
@@ -154,29 +168,34 @@ for my $method (qw(take untake steal)) {
 }
 
 # Test list attributes:
-my @emails = qw(dmitri@localhost dude@localhost);
+my @emails = qw(dmitri@localhost.localdomain dude@localhost.localdomain);
 throws_ok {
     $ticket->requestors(@emails);
 } 'RT::Client::REST::Object::InvalidValueException',
     'List attributes (requestors) only accept array reference';
 
+throws_ok {
+    $ticket->requestors(['2']);
+} 'RT::Client::REST::Object::InvalidValueException',
+    'requestors only accepts valid emails';
+
 lives_ok {
     $ticket->requestors(\@emails);
 } 'Set requestors to list of two values';
 
-ok(2 == $ticket->requestors, 'There are 2 requestors');
+is(scalar($ticket->requestors), 2, 'There are 2 requestors');
 
 lives_ok {
-    $ticket->add_requestors(qw(xyz@localhost root pgsql));
+    $ticket->add_requestors(qw(xyz@localhost.localdomain root@localhost.localdomain pgsql@localhost.localdomain));
 } 'Added three more requestors';
 
-ok(5 == $ticket->requestors, 'There are now 5 requestors');
+is(scalar($ticket->requestors), 5, 'There are now 5 requestors');
 
 lives_ok {
-    $ticket->delete_requestors('root');
+    $ticket->delete_requestors('root@localhost.localdomain');
 } 'Deleted a requestor (root)';
 
-ok(4 == $ticket->requestors, 'There are now 4 requestors');
+is(scalar($ticket->requestors), 4, 'There are now 4 requestors');
 
 ok('ticket' eq $ticket->rt_type);
 
@@ -216,5 +235,7 @@ is($ticket->due, 'Thu Sep 01 01:02:03 1983');
 throws_ok {
     $ticket->due_datetime(bless {}, 'foo');
 } 'RT::Client::REST::Object::InvalidValueException';
+
+done_testing;
 
 # vim:ft=perl:

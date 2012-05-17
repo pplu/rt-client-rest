@@ -33,6 +33,11 @@ use Exception::Class (
         description => "This happens when you feed me bad values",
     },
 
+    'RT::Client::REST::InvalidEmailAddressException'  => {
+        isa         => 'RT::Client::REST::InvalidParameterValueException',
+        description => "This happens when you feed me bad email addresses",
+    },
+
     'RT::Client::REST::CannotReadAttachmentException'  => {
         isa         => __PACKAGE__,
         description => "Cannot read attachment",
