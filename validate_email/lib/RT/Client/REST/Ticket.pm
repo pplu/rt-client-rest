@@ -12,6 +12,7 @@ $VERSION = 0.10;
 
 use Error qw(:try);
 use Params::Validate qw(:types);
+use Email::Valid;
 use RT::Client::REST 0.18;
 use RT::Client::REST::Attachment;
 use RT::Client::REST::Object 0.01;
@@ -60,6 +61,14 @@ The representation allows to retrieve, edit, comment on, and create
 tickets in RT.
 
 =cut
+
+my $_validate_email = sub {
+    my @emails = ref($_[0]) eq 'ARRAY' ? @{$_[0]} : ($_[0]);
+    foreach my $email (@emails) {
+        return unless Email::Valid->address($email);
+    }
+    return 1;
+};
 
 sub _attributes {{
 
@@ -132,6 +141,9 @@ sub _attributes {{
     requestors      => {
         validation  => {
             type    => ARRAYREF,
+            callbacks => {
+                'requestors_email_ok' => $_validate_email,
+            },
         },
         list        => 1,
     },
@@ -139,6 +151,9 @@ sub _attributes {{
     requestor      => {
         validation  => {
             type    => ARRAYREF,
+            callbacks => {
+                'requestor_email_ok' => $_validate_email,
+            },
         },
         list        => 1,
     },
@@ -146,6 +161,9 @@ sub _attributes {{
     cc              => {
         validation  => {
             type    => ARRAYREF,
+            callbacks => {
+                'cc_email_ok' => $_validate_email,
+            },
         },
         list        => 1,
     },
@@ -153,6 +171,9 @@ sub _attributes {{
     admin_cc        => {
         validation  => {
             type    => ARRAYREF,
+            callbacks => {
+                'admin_cc_email_ok' => $_validate_email,
+            },
         },
         list        => 1,
         rest_name   => 'AdminCc',

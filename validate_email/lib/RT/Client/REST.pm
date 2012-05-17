@@ -31,6 +31,7 @@ $VERSION = eval $VERSION;
 use Error qw(:try);
 use HTTP::Cookies;
 use HTTP::Request::Common;
+use Email::Valid;
 use RT::Client::REST::Exception 0.18;
 use RT::Client::REST::Forms;
 use RT::Client::REST::HTTPClient;
@@ -369,11 +370,13 @@ sub comment {
     );
 
     if (exists($opts{cc})) {
+        $self->_valid_email($opts{cc});
         push @objects, "Cc";
         $values{Cc} = delete($opts{cc});
     }
 
     if (exists($opts{bcc})) {
+        $self->_valid_email($opts{bcc});
         push @objects, "Bcc";
         $values{Bcc} = delete($opts{bcc});
     }
@@ -741,6 +744,16 @@ sub _assert_even {
     shift;
     RT::Client::REST::OddNumberOfArgumentsException->throw(
         "odd number of arguments passed") if @_ & 1;
+}
+
+sub _valid_email {
+    shift;
+    my @emails = ref($_[0]) eq 'ARRAY' ? @{$_[0]} : ($_[0]);
+    foreach my $email (@emails) {
+        RT::Client::REST::InvalidEmailAddressException->throw(
+            "'$email' is not a valid RFC822 email address"
+        ) unless Email::Valid->address($email);
+    }
 }
 
 sub _rest {
