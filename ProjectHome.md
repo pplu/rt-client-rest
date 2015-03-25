@@ -1,0 +1,1 @@
+RT::Client::REST is /usr/bin/rt converted to a Perl module. I needed to implement some RT interactions from my application, but did not feel that invoking a shell command is appropriate. Thus, I took rt tool, written by Abhijit Menon-Sen, and converted it to an object-oriented Perl module.
